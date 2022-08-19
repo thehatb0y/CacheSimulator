@@ -26,8 +26,9 @@ def startCache(cl):
         cacheMemory[i] = {'tag':0,'val':0,'data':0}
     return cacheMemory
 
-def cacheDirectMapAccess(DirectMap, cm, an):
+def cacheDirectMapAccess(DirectMap, an):
     cl = DirectMap.cacheLines
+    cm = startCache(cl)
     des = DirectMap.des
     index = DirectMap.index
 
