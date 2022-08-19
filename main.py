@@ -10,8 +10,7 @@ def main():
     accessNumber = 1000000 # Number of accesses for simulation
 
     DirectMap = cache.CacheConfig(cacheSize, byteAddress, blockSize, memoryAddressSize, associativeWays)
-    cacheMemory = cache.startCache(DirectMap.cacheLines)
-    cache.cacheDirectMapAccess(DirectMap, cacheMemory, accessNumber)
+    cache.cacheDirectMapAccess(DirectMap, accessNumber)
 
     AssociativeMap16way = cache.CacheConfig(cacheSize, byteAddress, blockSize, memoryAddressSize, 16)
     cache.cacheAssociativeMapAccess(AssociativeMap16way, accessNumber, 16)
