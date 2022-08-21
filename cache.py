@@ -5,7 +5,7 @@ from random import random
 class CacheConfig():
     def __init__(self, cs, ba, bs, ma, aw):
         #Cache size for 64KB
-        self.cacheSize = cs * 1024# Convert to first argument into KB, 32 = 32KB, 64 = 64KB, 128 = 128KB, 256 = 256KB
+        self.cacheSize = cs * 1024# Convert the first argument into KB, 32 = 32KB, 64 = 64KB, 128 = 128KB, 256 = 256KB
         self.byteAddress = ba # 8 bits = 1 byte
         self.blockSize =  bs # 8 bits = 1 byte
         self.memoryAddressSize = ma # 32 or 64 bits
@@ -15,9 +15,10 @@ class CacheConfig():
         self.index = int(math.log(self.cacheLines,2)) # number of bits for index
         self.des = int(math.log(self.blockSize/self.byteAddress,2)) # number of bits for des
         self.trueCacheSize = int(((self.cacheLines*self.associativeWays) * (self.blockSize + (self.memoryAddressSize-self.index-self.des)+1))/8192) # Conversion for true cache size in KB 
-        
-        print(f'CacheSize:{int(self.cacheSize/1024)}KB\t TrueCacheSize: {self.trueCacheSize}KB\t Index: {self.index}Bits\t Tag:{self.memoryAddressSize-self.index-self.des}\t Des:{self.des}')
-        print(f'BlockSize:{int(self.blockSize/8)}B\t ByteAddress: {int(self.byteAddress/8)}B\t MemoryAddressSize: {self.memoryAddressSize}Bits')
+        print(f'\nIndex: {self.index}b\t Tag:{self.memoryAddressSize-self.index-self.des}b\t Des:{self.des}b\t CacheLines:{self.cacheLines}\t AssociativeWays:{self.associativeWays}')
+        print(f'BlockSize:{int(self.blockSize/8)}B\t ByteAddress: {int(self.byteAddress/8)}B\t MemoryAddressSize: {self.memoryAddressSize}b\t ')
+        print(f'CacheSize:{int(self.cacheSize/1024)}KB\t TrueCacheSize: {self.trueCacheSize}KB\t TrueCacheSize is {100 * int(self.trueCacheSize)/cs - 100}% bigger')
+
 
 def startCache(cl):
     #create a disct of cache lines and insert tag = 0 , val = 0 , data = 0 in range of cache lines
@@ -52,7 +53,8 @@ def cacheDirectMapAccess(DirectMap, an):
             cm[address%cl]['tag'] = binary[:-des-index]
             cm[address%cl]['val'] = 1
             cm[address%cl]['data'] = binary
-    print(f'Hit:{hit}\t Miss:{miss}\t HitRate:{hit/an*100}%\t Hit+Miss:{hit+miss}')
+    print(f'Hit:{hit}\t Miss:{miss}\t HitRate:{round(hit/an*100, 3)}%\t TotalAccess:{hit+miss}')
+    return round(hit/an*100, 3)
 
 def cacheAssociativeMapAccess(DirectMap, an, aw):
     cl = DirectMap.cacheLines
@@ -61,11 +63,10 @@ def cacheAssociativeMapAccess(DirectMap, an, aw):
 
     hit = 0
     miss = 0
-    ramSize = DirectMap.cacheSize * 8 # RamSize is 8 times the cache size
+    ramSize = DirectMap.cacheSize * 4 # RamSize is 8 times the cache size
     #create a list of cacheMemory, the list have size of associativeWays and each item from the list should call startCache function
     cm = [startCache(cl) for i in range(aw)]
 
-    a =0
     #check check if tag = 0 in each cm list
     for i in range(an):
         #set address as a random from 0 to ramSize
@@ -73,7 +74,6 @@ def cacheAssociativeMapAccess(DirectMap, an, aw):
         #convert address to binary
         binary = bin(address)
         count = 0
-        a= a+1
         for j in range(aw):
             count = count + 1
             if  cm[j][address%cl]['val'] == 1:
@@ -87,4 +87,5 @@ def cacheAssociativeMapAccess(DirectMap, an, aw):
             cm[addRandom][address%cl]['val'] = 1
             cm[addRandom][address%cl]['data'] = binary       
 
-    print(f'Hit:{hit}\t Miss:{miss}\t HitRate:{hit/an*100}%\t Hit+Miss:{hit+miss}')
+    print(f'Hit:{hit}\t Miss:{miss}\t HitRate:{round(hit/an*100, 3)}%\t TotalAccess:{hit+miss}')
+    return round(hit/an*100, 3)
