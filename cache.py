@@ -20,9 +20,7 @@ class CacheConfig():
         print(f'BlockSize:{int(self.blockSize/8)}B\t ByteAddress: {int(self.byteAddress/8)}B\t MemoryAddressSize: {self.memoryAddressSize}b\t ')
         print(f'CacheSize:{int(self.cacheSize/1024)}KB\t TrueCacheSize: {self.trueCacheSize}KB\t TrueCacheSize is {100 * float(self.trueCacheSize)/(self.cacheSize/1024)- 100}% bigger')
 
-
 def startCache(cl):
-    #create a disct of cache lines and insert tag = 0 , val = 0 , data = 0 in range of cache lines
     cacheMemory = {}
     for i in range(cl):
         cacheMemory[i] = {'tag':0,'val':0,'data':0}
@@ -47,7 +45,6 @@ def cacheDirectMapAccess(DirectMap, memoryAcess):
     conflictMiss = 0
 
     for acessNumber in memoryAcess:
-        #set address as a random from 0 to ramSize
         address = int(acessNumber)
         #convert address to binary
         binary = bin(int(address))
