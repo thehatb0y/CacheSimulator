@@ -9,13 +9,23 @@ import matplotlib.pyplot as plt
     #associativeWays = 1 # 1 = Direct Mapping, 2 = 2-way associative, 4 = 4-way associative, 8 = 8-way associative, 16 = 16-way associative
 #nsets, blockSize, associativity, replacementPolicy, outputFlag, inputFile
 
-def main(nsets, blockSize, associativity, replacementPolicy, outputFlag, inputFile):
+def main():
+    #cache_simulator <nsets> <bsize> <assoc> <substituição> <flag_saida> arquivo_de_entrada
+
+    nsets = 256
+    blockSize = 32
+    associativity = 1
     byteAddress = 8 
+
+    replacementPolicy = "r"
+    outputFlag = "a"
+
+    inputFile =  "bin_100"
     memoryAcess = []
     with open(f'{inputFile}.txt', 'r') as txt:
         for line in txt:
             memoryAcess.append(int(line))
-
+    
     if associativity == 1:
             cache.cacheDirectMapAccess(cache.CacheConfig(nsets, blockSize, associativity, byteAddress), memoryAcess)
     elif associativity > 1:
