@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 def main():
     #cache_simulator <nsets> <bsize> <assoc> <substituição> <flag_saida> arquivo_de_entrada
+    # cache_simulator 128 2 4 R 1 bin_1000.bin
 
     nsets = 256
     blockSize = 32
@@ -19,13 +20,31 @@ def main():
 
     replacementPolicy = "r"
     outputFlag = "a"
-
-    inputFile =  "bin_100"
-    memoryAcess = []
-    with open(f'{inputFile}.txt', 'r') as txt:
-        for line in txt:
-            memoryAcess.append(int(line))
     
+    inputFile =  "bin_10000"
+    memoryAcess = []
+
+    file = open(f'{inputFile}.bin', "rb")
+    data = file.read()
+
+    binary = bin(int.from_bytes(data, byteorder='big'))
+    first_word_bin = bin(int.from_bytes(data[:4], byteorder='big'))
+
+    n = (32-len(first_word_bin[2:]))
+    first_word = ("0"*n)+first_word_bin[2:]
+    #memoryAcess.append(str(first_word))
+    i = len(first_word_bin)
+    total = 0
+
+    while binary[i:i+32] != "":
+        #memoryAcess.append(str(binary[i:i+32]))
+        i = i + 32
+        total = total + 1
+
+    for i in range(50):
+        memoryAcess.append(str(1))
+        memoryAcess.append(str(100000001))
+
     if associativity == 1:
             cache.cacheDirectMapAccess(cache.CacheConfig(nsets, blockSize, associativity, byteAddress), memoryAcess)
     elif associativity > 1:
