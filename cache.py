@@ -44,10 +44,10 @@ def cacheDirectMapAccess(DirectMap, memoryAcess):
     capacityMiss = 0
     conflictMiss = 0
 
-    for acessNumber in memoryAcess:
-        address = int(acessNumber)
-        #convert address to binary
-        binary = bin(int(address))
+    for binary in memoryAcess:
+        #print acessNumber as decimal
+        address = int(binary, 2)
+
         if  cm[address%cl]['val'] == 1:
             if  cm[address%cl]['tag'] == binary[:-des-index]:
                 hit = hit + 1
@@ -56,18 +56,21 @@ def cacheDirectMapAccess(DirectMap, memoryAcess):
                 conflictMiss = conflictMiss + 1
                 cm[address%cl]['tag'] = binary[:-des-index]
                 cm[address%cl]['val'] = 1
-                cm[address%cl]['data'] = binary
+                if checkCache(cm) == False:
+                    capacityMiss = capacityMiss + 1
         else:
             miss = miss + 1
             compulsoryMiss = compulsoryMiss + 1
             cm[address%cl]['tag'] = binary[:-des-index]
             cm[address%cl]['val'] = 1
-            cm[address%cl]['data'] = binary
 
     #Total de acessos, Taxa de hit, Taxa de miss, Taxa de miss compulsório, Taxa de miss de capacidade, Taxa de miss de conflito 
     print(f'Hit:{hit}\t Miss:{miss}\t HitRate:{round(hit/len(memoryAcess)*100, 3)}%\t TotalAccess:{hit+miss}')
-    print(f'MissCompulsory:{compulsoryMiss}\t MissConflict:{conflictMiss}\t')
+    print(f'MissCompulsory:{compulsoryMiss}\t MissConflict:{conflictMiss}\t MissCapacity:{capacityMiss}\t')
+    
     return round(hit/len(memoryAcess)*100, 3)
+
+
 
 def cacheAssociativeMapAccess(DirectMap, memoryAcess):
     cl = DirectMap.cacheLines
@@ -76,20 +79,18 @@ def cacheAssociativeMapAccess(DirectMap, memoryAcess):
 
     hit = 0
     miss = 0
-    missCompulsory = 0
-    missConflict = 0
-    missCapacity = 0
+
+    compulsoryMiss = 0
+    capacityMiss = 0
+    conflictMiss = 0
 
     #create a list of cacheMemory, the list have size of associativeWays and each item from the list should call startCache function
     cm = [startCache(cl) for i in range(DirectMap.associativeWays)]
 
     #check check if tag = 0 in each cm list
-    for acessNumber in memoryAcess:
-        #set address as a random from 0 to ramSize
-        address = int(acessNumber)
-        #convert address to binary
-        binary = bin(address)
-        count = 0
+    for binary in memoryAcess:
+
+        address = int(binary, 2)
         isTagTrue = False
         for j in range(DirectMap.associativeWays):
             if  cm[j][address%cl]['val'] == 1:
@@ -100,6 +101,7 @@ def cacheAssociativeMapAccess(DirectMap, memoryAcess):
 
         if isTagTrue == False:
             miss = miss + 1
+            compulsoryMiss = compulsoryMiss + 1
             isPositionFree = False
             for j in range(DirectMap.associativeWays):
                 if  cm[j][address%cl]['val'] == 0:
@@ -110,11 +112,15 @@ def cacheAssociativeMapAccess(DirectMap, memoryAcess):
                     break
             
             if isPositionFree == False:
-                missConflict = missConflict + 1
+                conflictMiss = conflictMiss + 1
+                if checkCache(cm) == False:
+                    capacityMiss = capacityMiss + 1
                 addRandom = int(random.randrange(0, DirectMap.associativeWays))
                 cm[addRandom][address%cl]['tag'] = binary[:-des-index]
                 cm[addRandom][address%cl]['val'] = 1
                 cm[addRandom][address%cl]['data'] = binary
             
     print(f'Hit:{hit}\t Miss:{miss}\t HitRate:{round(hit/len(memoryAcess)*100, 3)}%\t TotalAccess:{hit+miss}')
+    print(f'MissCompulsory:{compulsoryMiss}\t MissConflict:{conflictMiss}\t MissCapacity:{capacityMiss}')
+
     return round(hit/len(memoryAcess)*100, 3)
