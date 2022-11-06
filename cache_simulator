@@ -1,0 +1,53 @@
+import cache
+import sys
+
+# how to run:
+#           python cache_simulator 256 4 1 R 1 bin_100
+#           python cache_simulator 128 2 4 R 1 bin_1000
+#           python cache_simulator 256 1 2 R 1 bin_10000
+
+def main():
+#cache_simulator <nsets> <bsize> <assoc> <substituição> <flag_saida> arquivo_de_entrada
+    #cacheSize = 64 # in KB 1= 1KB, 64 = 64KB
+    #byteAddress = 8 # 8 bits = 1 byte
+    #blockSize =  32 # 8 bits = 1 byte
+    #memoryAddressSize = 32 # 32 or 64 bits
+    #associativeWays = 1 # 1 = Direct Mapping, 2 = 2-way associative, 4 = 4-way associative, 8 = 8-way associative, 16 = 16-way associative
+    nsets = int(sys.argv[1])
+    blockSize = int(sys.argv[2])*8
+    associativity = int(sys.argv[3])
+    byteAddress = 8 
+    replacementPolicy = str(sys.argv[4])
+    outputFlag = int(sys.argv[5])
+    inputFile =  str(sys.argv[6])
+    #memoryAcess is a list of binary numbers
+    memoryAcess = []
+
+    #read the file and convert to a dict structure with binary numbers
+    file = open(f'{inputFile}.bin', "rb")
+    data = file.read() # the file read comes into hexadecimal format, so data = hexadecimal
+    binary = bin(int.from_bytes(data, byteorder='big')) # then we convert to binary
+    
+    # when we convert the file to binary, the first number is 0b, so we need remove it and add 0 to the left, that just happens on the first word
+    first_word_bin = bin(int.from_bytes(data[:4], byteorder='big')) # first word = 4 bytes
+    n = (32-len(first_word_bin[2:])) # remove the 0b
+    first_word = ("0"*n)+first_word_bin[2:] # count the number of 0 to add to the left
+    memoryAcess.append(str(first_word)) # add the first word to the list
+
+    i = len(first_word_bin) # i is the number of bits of the first word
+
+    while binary[i:i+32] != "": # start from i and go to the end of the file
+        memoryAcess.append(str(binary[i:i+32]))
+        i = i + 32
+
+
+    if associativity == 1:
+            return cache.cacheDirectMapAccess(cache.CacheConfig(nsets, blockSize, associativity, byteAddress), memoryAcess, outputFlag)
+    elif associativity > 1:
+            return cache.cacheAssociativeMapAccess(cache.CacheConfig(nsets, blockSize, associativity, byteAddress), replacementPolicy, memoryAcess, outputFlag)
+    else:
+        print("Invalid Associative-Way")
+        exit()
+
+if __name__ == "__main__":
+    main()
