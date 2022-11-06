@@ -32,8 +32,6 @@ def checkCache(cacheMemory):
             return False
     return True
 
-def LRU
-
 def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
     cl = DirectMap.cacheLines # cl = cache lines
     cm = startCache(cl) # cm = Cache memory, start the cache with 0
@@ -142,9 +140,9 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
                     if checkCache(cm[0]) == False:
                         capacityMiss = capacityMiss + 1
                     #Using the LRU algorithm to choose which way to replace
-                    addLRU = LRU(cm, cmIndex)
-                    cm[addLRU][cmIndex]['tag'] = binary[:-des-index]
-                    cm[addLRU][cmIndex]['val'] = 1
+                    #addLRU = LRU(cm, cmIndex)
+                    #cm[addLRU][cmIndex]['tag'] = binary[:-des-index]
+                    #cm[addLRU][cmIndex]['val'] = 1
 
     with open('CacheReport.txt', 'w') as f:
         for i in range(DirectMap.associativeWays):
