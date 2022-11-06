@@ -1,8 +1,8 @@
-from ast import Str
 import math
 from random import random
 import random
 
+#CacheConfig build the cache
 class CacheConfig():
     def __init__(self, nsets, blockSize, associativity, byteAddress):
         self.cacheSize = (nsets * blockSize * associativity)/8 # Convert the first argument into KB, 32 = 32KB, 64 = 64KB, 128 = 128KB, 256 = 256KB
@@ -19,25 +19,26 @@ class CacheConfig():
         print(f'Index: {self.index}b\t Tag:{self.memoryAddressSize-self.index-self.des}b\t Des:{self.des}b\t CacheLines:{self.cacheLines}\t AssociativeWays:{self.associativeWays}')
         print(f'BlockSize:{int(self.blockSize/8)}B\t ByteAddress: {int(self.byteAddress/8)}B\t MemoryAddressSize: {self.memoryAddressSize}b\t ')
         print(f'CacheSize:{int(self.cacheSize/1024)}KB\t TrueCacheSize: {self.trueCacheSize}KB\t TrueCacheSize is {100 * float(self.trueCacheSize)/(self.cacheSize/1024)- 100}% bigger')
-
+#Start the cache with 0
 def startCache(cl):
     cacheMemory = {}
     for i in range(cl):
         cacheMemory[i] = {'tag':0,'val':0,'data':0}
     return cacheMemory
-
+#Check if the cache is full, if it is full, return true
 def checkCache(cacheMemory):
     for acessNumber in cacheMemory:
         if cacheMemory[acessNumber]['val'] == 0:
             return False
     return True
 
-def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
+def LRU
 
-    cl = DirectMap.cacheLines
-    cm = startCache(cl)
-    des = DirectMap.des
-    index = DirectMap.index
+def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
+    cl = DirectMap.cacheLines # cl = cache lines
+    cm = startCache(cl) # cm = Cache memory, start the cache with 0
+    des = DirectMap.des # des = displacement
+    index = DirectMap.index # size of cache index in bits
 
     hit = 0
     miss = 0
@@ -45,39 +46,47 @@ def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
     capacityMiss = 0
     conflictMiss = 0
     
+    #each 32 bits on the file is a memory acess in binary
     for binary in memoryAcess:
+        #Gets the index of the binary
         if des == 0:
-            cmIndex = int(binary[32-index:],2)
+            cmIndex = int(binary[32-index:],2) 
         else:
             cmIndex = int(binary[32-des-index:-des],2)
-
-        if  cm[cmIndex]['val'] == 1:
+        #Using the Index that we got from the last step, we check if the tag is the same as the binary on the right position
+        if  cm[cmIndex]['val'] == 1: #Before check the tag, we need to check the valid bit
             if  cm[cmIndex]['tag'] == binary[:-des-index]:
-                hit = hit + 1
+                hit = hit + 1 #If the tag is the same, we have a hit
             else:
-                miss = miss +1
+                miss = miss +1 #If valid bit is 1 and the tag is different, we have a conflict miss
                 conflictMiss = conflictMiss + 1
-                cm[cmIndex]['tag'] = binary[:-des-index]
-                cm[cmIndex]['val'] = 1
-                if checkCache(cm) == False:
+                cm[cmIndex]['tag'] = binary[:-des-index] #Update the tag
+                if checkCache(cm) == False: #Check if the cache is full
                     capacityMiss = capacityMiss + 1
-        else:
+        else: # If the valid bit is 0, we have a compulsory miss
             miss = miss + 1
             compulsoryMiss = compulsoryMiss + 1
-            cm[cmIndex]['tag'] = binary[:-des-index]
-            cm[cmIndex]['val'] = 1
+            cm[cmIndex]['tag'] = binary[:-des-index] #Update the tag
+            cm[cmIndex]['val'] = 1 # Update the valid bit
+    
+    #Writes the Cache Memory current state on the file
+    with open('CacheReport.txt', 'w') as f:
+        for key, value in cm.items():
+            f.write('%s:%s\n' % (key, value))
+    
     print("\n[Cache Simulation]")   
     if int(outputFlag) == 0:
-        print(f'Hit:{hit}\t Miss:{miss}\t HitRate:{round(hit/len(memoryAcess)*100, 3)}%\t TotalAccess:{hit+miss}')
-        print(f'MissCompulsory:{compulsoryMiss}\t MissConflict:{conflictMiss}\t MissCapacity:{capacityMiss}\t')
+        print(f'Hit:{hit}\t Miss:{miss}\t TotalAccess:{hit+miss}')
+        print(f'HitRate:{round(hit/len(memoryAcess), 3)}\t MissCompulsory:{round(compulsoryMiss/len(memoryAcess), 3)}\t MissConflict:{round(conflictMiss/len(memoryAcess), 3)}\t MissCapacity:{round(capacityMiss/len(memoryAcess), 3)}\t')
+        return f'{hit+miss}, {round(hit/len(memoryAcess), 3)}, {round(miss/len(memoryAcess), 3)}, {round(compulsoryMiss/len(memoryAcess), 3)}, {round(capacityMiss/len(memoryAcess), 3)}, {round(conflictMiss/len(memoryAcess), 3)}'
     else:
-        print(f'{hit+miss}, {round(hit/len(memoryAcess)*100, 3)}, {round(miss/len(memoryAcess)*100, 3)}, {round(compulsoryMiss/len(memoryAcess)*100, 3)}, {round(capacityMiss/len(memoryAcess)*100, 3)}, {round(conflictMiss/len(memoryAcess)*100, 3)}')
-        return f'{hit+miss}, {round(hit/len(memoryAcess)*100, 3)}, {round(miss/len(memoryAcess)*100, 3)}, {round(compulsoryMiss/len(memoryAcess)*100, 3)}, {round(capacityMiss/len(memoryAcess)*100, 3)}, {round(conflictMiss/len(memoryAcess)*100, 3)}'
+        print(f'{hit+miss}, {round(hit/len(memoryAcess), 3)}, {round(miss/len(memoryAcess), 3)}, {round(compulsoryMiss/len(memoryAcess), 3)}, {round(capacityMiss/len(memoryAcess), 3)}, {round(conflictMiss/len(memoryAcess), 3)}')
+        return f'{hit+miss}, {round(hit/len(memoryAcess), 3)}, {round(miss/len(memoryAcess), 3)}, {round(compulsoryMiss/len(memoryAcess), 3)}, {round(capacityMiss/len(memoryAcess), 3)}, {round(conflictMiss/len(memoryAcess), 3)}'
 
-def cacheAssociativeMapAccess(DirectMap, memoryAcess, outputFlag):
-    cl = DirectMap.cacheLines
-    des = DirectMap.des
-    index = DirectMap.index
+def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputFlag):
+    cl = DirectMap.cacheLines # cl = cache lines
+    des = DirectMap.des # des = displacement
+    index = DirectMap.index # size of cache index in bits
 
     hit = 0
     miss = 0
@@ -86,42 +95,62 @@ def cacheAssociativeMapAccess(DirectMap, memoryAcess, outputFlag):
     capacityMiss = 0
     conflictMiss = 0
 
-    cm = [startCache(cl) for i in range(DirectMap.associativeWays)]
-    
+    cm = [startCache(cl) for i in range(DirectMap.associativeWays)] # Construct a CacheMemory for each way of the cache, a cache memory is a dict and start evertything as 0 
+    #each 32 bits on the file is a memory acess in binary 
     for binary in memoryAcess:
+        #Gets the index of the binary
         if des == 0:
             cmIndex = int(binary[32-index:],2)
         else:
             cmIndex = int(binary[32-des-index:-des],2)
 
         isTagTrue = False
+        #For each way j of the cache, we check if the tag is the same as the binary on the right position and check the valid bit
         for j in range(DirectMap.associativeWays):
             if  cm[j][cmIndex]['val'] == 1:
+                #If the tag is the same, we have a hit
                 if  cm[j][cmIndex]['tag'] == binary[:-des-index]:
                     hit = hit + 1
                     isTagTrue = True
                     break
-
+        #If the tag is not the same, we have a miss
         if isTagTrue == False:
             miss = miss + 1
-            compulsoryMiss = compulsoryMiss + 1
-            isPositionFree = False
+            choosePosition = False
+            #For each way j of the cache, we check if the valid bit is 0, if it is 0, we can use this way to store the new tag
             for j in range(DirectMap.associativeWays):
                 if  cm[j][cmIndex]['val'] == 0:
+                    compulsoryMiss = compulsoryMiss + 1
                     cm[j][cmIndex]['tag'] = binary[:-des-index]
                     cm[j][cmIndex]['val'] = 1
-                    cm[j][cmIndex]['data'] = binary
-                    isPositionFree = True
+                    choosePosition = True
                     break
-            
-            if isPositionFree == False:
-                conflictMiss = conflictMiss + 1
-                addRandom = int(random.randrange(0, DirectMap.associativeWays))
-                if checkCache(cm[addRandom]) == False:
-                    capacityMiss = capacityMiss + 1
-                cm[addRandom][cmIndex]['tag'] = binary[:-des-index]
-                cm[addRandom][cmIndex]['val'] = 1
-                cm[addRandom][cmIndex]['data'] = binary
+            #If choosePosition is false, it means that all the ways are full, so we need to use the replacement policy to choose which way to replace
+            if choosePosition == False:
+                if replacementPolicy == "R":
+                    conflictMiss = conflictMiss + 1
+                    #Randomly choose a way to replace
+                    addRandom = int(random.randrange(0, DirectMap.associativeWays)) 
+                    #Check if the cache is full
+                    if checkCache(cm[addRandom]) == False:
+                        capacityMiss = capacityMiss + 1
+                    cm[addRandom][cmIndex]['tag'] = binary[:-des-index]
+                    cm[addRandom][cmIndex]['val'] = 1
+                elif replacementPolicy == "LRU":
+                    conflictMiss = conflictMiss + 1
+                    #Check if the cache is full
+                    if checkCache(cm[0]) == False:
+                        capacityMiss = capacityMiss + 1
+                    #Using the LRU algorithm to choose which way to replace
+                    addLRU = LRU(cm, cmIndex)
+                    cm[addLRU][cmIndex]['tag'] = binary[:-des-index]
+                    cm[addLRU][cmIndex]['val'] = 1
+
+    with open('CacheReport.txt', 'w') as f:
+        for i in range(DirectMap.associativeWays):
+            f.write(f'Way {i+1}: \n')
+            for key, value in cm[i].items():
+                f.write('%s:%s\n' % (key, value))
 
     print("\n[Cache Simulation]")        
     if int(outputFlag) == 0:
