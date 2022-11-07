@@ -40,7 +40,6 @@ def main():
         memoryAcess.append(str(binary[i:i+32]))
         i = i + 32
 
-
     if associativity == 1:
             return cache.cacheDirectMapAccess(cache.CacheConfig(nsets, blockSize, associativity, byteAddress), memoryAcess, outputFlag)
     elif associativity > 1:
