@@ -25,7 +25,7 @@ def startCache(cl):
     for i in range(cl):
         cacheMemory[i] = {'tag':0,'val':0,'data':0}
     return cacheMemory
-#Check if the cache is full, if it is full, return true
+#Check if the cache is full, return true
 def checkCache(cacheMemory):
     for acessNumber in cacheMemory:
         if cacheMemory[acessNumber]['val'] == 0:
@@ -64,10 +64,12 @@ def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
                 hit = hit + 1 #If the tag is the same, we have a hit
             else:
                 miss = miss +1 #If valid bit is 1 and the tag is different, we have a conflict miss
-                conflictMiss = conflictMiss + 1
                 cm[cmIndex]['tag'] = binary[:-des-index] #Update the tag
                 if checkCache(cm) == False: #Check if the cache is full
                     capacityMiss = capacityMiss + 1
+                else:
+                    conflictMiss = conflictMiss + 1
+
         else: # If the valid bit is 0, we have a compulsory miss
             miss = miss + 1
             compulsoryMiss = compulsoryMiss + 1
@@ -142,15 +144,22 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
             #If choosePosition is false, it means that all the ways are full, so we need to use the replacement policy to choose which way to replace
             if choosePosition == False:
                 if replacementPolicy == "R":
-                    conflictMiss = conflictMiss + 1
                     #Randomly choose a way to replace
                     addRandom = int(random.randrange(0, DirectMap.associativeWays)) 
                     #Check if the cache is full
-                    if checkCache(cm[addRandom]) == False:
+                    isCmFull = True
+                    for j in range(DirectMap.associativeWays):
+                        if checkCache(cm[j]) == False:
+                            isCmFull = False
+                        
+                    if isCmFull == True:
                         capacityMiss = capacityMiss + 1
+                    else:
+                        conflictMiss = conflictMiss + 1
+                    
                     cm[addRandom][cmIndex]['tag'] = binary[:-des-index]
                     cm[addRandom][cmIndex]['val'] = 1
-                elif replacementPolicy == "LRU":
+                elif replacementPolicy == "L":
                     conflictMiss = conflictMiss + 1
                     #Check if the cache is full
                     if checkCache(cm[0]) == False:
