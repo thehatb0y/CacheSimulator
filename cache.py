@@ -14,11 +14,11 @@ class CacheConfig():
         self.cacheLines = nsets  #Cache index size
         self.index = int(math.log(self.cacheLines,2)) # number of bits for index
         self.des = int(math.log(self.blockSize/self.byteAddress,2)) # number of bits for des
-        self.trueCacheSize = round(((self.cacheLines * self.associativeWays) * (self.blockSize + (self.memoryAddressSize - self.index - self.des)+1))/8192, 2) # Conversion for true cache size in KB 
+        self.trueCacheSize = round(((self.cacheLines * self.associativeWays) * (self.blockSize + (self.memoryAddressSize - self.index - self.des)+1))/8192, 3) # Conversion for true cache size in KB 
         print("\n[Cache Configuration]")
         print(f'Index: {self.index}b\t Tag:{self.memoryAddressSize-self.index-self.des}b\t Des:{self.des}b\t CacheLines:{self.cacheLines}\t AssociativeWays:{self.associativeWays}')
         print(f'BlockSize:{int(self.blockSize/8)}B\t ByteAddress: {int(self.byteAddress/8)}B\t MemoryAddressSize: {self.memoryAddressSize}b\t ')
-        print(f'CacheSize:{int(self.cacheSize/1024)}KB\t TrueCacheSize: {self.trueCacheSize}KB\t TrueCacheSize is {100 * float(self.trueCacheSize)/(self.cacheSize/1024)- 100}% bigger')
+        print(f'CacheSize:{round(self.cacheSize/1024, 3)}KB\t TrueCacheSize: {self.trueCacheSize}KB\t TrueCacheSize is {round((100 * ((round((self.trueCacheSize), 3))/(round((self.cacheSize/1024),3)))- 100), 3)}% bigger')
 #Start the cache with 0
 def startCache(cl):
     cacheMemory = {}
@@ -31,6 +31,13 @@ def checkCache(cacheMemory):
         if cacheMemory[acessNumber]['val'] == 0:
             return False
     return True
+
+def fifo(cl):
+    #create a list of queus with the size of the cache lines
+    fifo = []
+    for i in range(cl):
+        fifo.append([])
+    return fifo
 
 def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
     cl = DirectMap.cacheLines # cl = cache lines
@@ -72,14 +79,20 @@ def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
         for key, value in cm.items():
             f.write('%s:%s\n' % (key, value))
     
+    misses = round(miss/len(memoryAcess), 3)
+    hits = round(hit/len(memoryAcess), 3)
+    compulsoryMiss = round(compulsoryMiss/misses, 2)
+    capacityMiss = round(capacityMiss/miss, 3)
+    conflictMiss = round(conflictMiss/miss, 3)
+
     print("\n[Cache Simulation]")   
     if int(outputFlag) == 0:
         print(f'Hit:{hit}\t Miss:{miss}\t TotalAccess:{hit+miss}')
-        print(f'HitRate:{round(hit/len(memoryAcess), 3)}\t MissCompulsory:{round(compulsoryMiss/len(memoryAcess), 3)}\t MissConflict:{round(conflictMiss/len(memoryAcess), 3)}\t MissCapacity:{round(capacityMiss/len(memoryAcess), 3)}\t')
-        return f'{hit+miss}, {round(hit/len(memoryAcess), 3)}, {round(miss/len(memoryAcess), 3)}, {round(compulsoryMiss/len(memoryAcess), 3)}, {round(capacityMiss/len(memoryAcess), 3)}, {round(conflictMiss/len(memoryAcess), 3)}'
+        print(f'HitRate:{hits}\t MissCompulsory:{compulsoryMiss}\t MissConflict:{conflictMiss}\t MissCapacity:{capacityMiss}\t')
+        return f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}'
     else:
-        print(f'{hit+miss}, {round(hit/len(memoryAcess), 3)}, {round(miss/len(memoryAcess), 3)}, {round(compulsoryMiss/len(memoryAcess), 3)}, {round(capacityMiss/len(memoryAcess), 3)}, {round(conflictMiss/len(memoryAcess), 3)}')
-        return f'{hit+miss}, {round(hit/len(memoryAcess), 3)}, {round(miss/len(memoryAcess), 3)}, {round(compulsoryMiss/len(memoryAcess), 3)}, {round(capacityMiss/len(memoryAcess), 3)}, {round(conflictMiss/len(memoryAcess), 3)}'
+        print(f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}')
+        return f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}'
 
 def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputFlag):
     cl = DirectMap.cacheLines # cl = cache lines
@@ -100,7 +113,10 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
         if des == 0:
             cmIndex = int(binary[32-index:],2)
         else:
-            cmIndex = int(binary[32-des-index:-des],2)
+            if index == 0:
+                cmIndex = 0
+            else:
+                cmIndex = int(binary[32-des-index:-des],2)
 
         isTagTrue = False
         #For each way j of the cache, we check if the tag is the same as the binary on the right position and check the valid bit
@@ -150,10 +166,17 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
             for key, value in cm[i].items():
                 f.write('%s:%s\n' % (key, value))
 
-    print("\n[Cache Simulation]")        
+    misses = round(miss/len(memoryAcess), 3)
+    hits = round(hit/len(memoryAcess), 3)
+    compulsoryMiss = round(compulsoryMiss/miss, 2)
+    capacityMiss = round(capacityMiss/miss, 3)
+    conflictMiss = round(conflictMiss/miss, 3)
+
+    print("\n[Cache Simulation]")   
     if int(outputFlag) == 0:
-        print(f'Hit:{hit}\t Miss:{miss}\t HitRate:{round(hit/len(memoryAcess)*100, 3)}%\t TotalAccess:{hit+miss}')
-        print(f'MissCompulsory:{compulsoryMiss}\t MissConflict:{conflictMiss}\t MissCapacity:{capacityMiss}\t')
+        print(f'Hit:{hit}\t Miss:{miss}\t TotalAccess:{hit+miss}')
+        print(f'HitRate:{hits}\t MissCompulsory:{compulsoryMiss}\t MissConflict:{conflictMiss}\t MissCapacity:{capacityMiss}\t')
+        return f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}'
     else:
-        print(f'{hit+miss}, {round(hit/len(memoryAcess)*100, 3)}, {round(miss/len(memoryAcess)*100, 3)}, {round(compulsoryMiss/len(memoryAcess)*100, 3)}, {round(capacityMiss/len(memoryAcess)*100, 3)}, {round(conflictMiss/len(memoryAcess)*100, 3)}')
-        return f'{hit+miss}, {round(hit/len(memoryAcess)*100, 3)}, {round(miss/len(memoryAcess)*100, 3)}, {round(compulsoryMiss/len(memoryAcess)*100, 3)}, {round(capacityMiss/len(memoryAcess)*100, 3)}, {round(conflictMiss/len(memoryAcess)*100, 3)}'
+        print(f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}')
+        return f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}'
