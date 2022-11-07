@@ -91,8 +91,8 @@ def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
         print(f'HitRate:{hits}\t MissCompulsory:{compulsoryMiss}\t MissConflict:{conflictMiss}\t MissCapacity:{capacityMiss}\t')
         return f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}'
     else:
-        print(f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}')
-        return f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}'
+        print(f'{hit+miss} {hits} {misses} {compulsoryMiss} {capacityMiss} {conflictMiss}')
+        return f'{hit+miss} {hits} {misses} {compulsoryMiss} {capacityMiss} {conflictMiss}'
 
 def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputFlag):
     cl = DirectMap.cacheLines # cl = cache lines
@@ -176,7 +176,7 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
     if int(outputFlag) == 0:
         print(f'Hit:{hit}\t Miss:{miss}\t TotalAccess:{hit+miss}')
         print(f'HitRate:{hits}\t MissCompulsory:{compulsoryMiss}\t MissConflict:{conflictMiss}\t MissCapacity:{capacityMiss}\t')
-        return f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}'
+        return f'{hit+miss} {hits} {misses} {compulsoryMiss} {capacityMiss} {conflictMiss}'
     else:
-        print(f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}')
-        return f'{hit+miss}, {hits}, {misses}, {compulsoryMiss}, {capacityMiss}, {conflictMiss}'
+        print(f'{hit+miss} {hits} {misses} {compulsoryMiss} {capacityMiss} {conflictMiss}')
+        return f'{hit+miss} {hits} {misses} {compulsoryMiss} {capacityMiss} {conflictMiss}'
