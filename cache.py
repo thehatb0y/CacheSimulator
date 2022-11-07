@@ -1,6 +1,7 @@
 import math
 from random import random
 import random
+import numpy as np
 
 #CacheConfig build the cache
 class CacheConfig():
@@ -31,13 +32,6 @@ def checkCache(cacheMemory):
         if cacheMemory[acessNumber]['val'] == 0:
             return False
     return True
-
-def fifo(cl):
-    #create a list of queus with the size of the cache lines
-    fifo = []
-    for i in range(cl):
-        fifo.append([])
-    return fifo
 
 def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
     cl = DirectMap.cacheLines # cl = cache lines
@@ -109,6 +103,11 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
     conflictMiss = 0
 
     cm = [startCache(cl) for i in range(DirectMap.associativeWays)] # Construct a CacheMemory for each way of the cache, a cache memory is a dict and start evertything as 0 
+    # start var A with np.array with a list of size cl and each element is a list of size associativityWays
+    fifo = np.array([[0 for i in range(DirectMap.associativeWays)] for j in range(cl)]) # Construct a matrix with the size of cacheLines and the number of ways, each element is a list with the size of the number of ways
+    # print first element of the list in A
+
+    for i in fifo: i.append(34)
     #each 32 bits on the file is a memory acess in binary 
     for binary in memoryAcess:
         #Gets the index of the binary
@@ -119,7 +118,8 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
                 cmIndex = 0
             else:
                 cmIndex = int(binary[32-des-index:-des],2)
-
+        #start a list fifo with size cl
+        #fifo = [0 for i in range(cl)]
         isTagTrue = False
         #For each way j of the cache, we check if the tag is the same as the binary on the right position and check the valid bit
         for j in range(DirectMap.associativeWays):
@@ -138,6 +138,8 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
                 if  cm[j][cmIndex]['val'] == 0:
                     compulsoryMiss = compulsoryMiss + 1
                     cm[j][cmIndex]['tag'] = binary[:-des-index]
+                    #append tag to the first position of the list fifo and remove the last element
+                    #fifo[cmIndex] = [binary[:-des-index]] + fifo[cmIndex][:-1]
                     cm[j][cmIndex]['val'] = 1
                     choosePosition = True
                     break
@@ -158,17 +160,23 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
                         conflictMiss = conflictMiss + 1
                     
                     cm[addRandom][cmIndex]['tag'] = binary[:-des-index]
+                    #save the tag  in the first position of cmindex of the list fifo and remove the last element
+                    #fifo[cmIndex] = [binary[:-des-index]] + fifo[cmIndex][:-1]
+                
                     cm[addRandom][cmIndex]['val'] = 1
-                elif replacementPolicy == "L":
-                    conflictMiss = conflictMiss + 1
+                elif replacementPolicy == "F":
                     #Check if the cache is full
-                    if checkCache(cm[0]) == False:
+                    isCmFull = True
+                    for j in range(DirectMap.associativeWays):
+                        if checkCache(cm[j]) == False:
+                            isCmFull = False
+                        
+                    if isCmFull == True:
                         capacityMiss = capacityMiss + 1
-                    #Using the LRU algorithm to choose which way to replace
-                    #addLRU = LRU(cm, cmIndex)
-                    #cm[addLRU][cmIndex]['tag'] = binary[:-des-index]
-                    #cm[addLRU][cmIndex]['val'] = 1
-
+                    else:
+                        conflictMiss = conflictMiss + 1
+        #print(fifo)          
+ 
     with open('CacheReport.txt', 'w') as f:
         for i in range(DirectMap.associativeWays):
             f.write(f'Way {i+1}: \n')
