@@ -1,21 +1,25 @@
 import math
 from random import random
 import random
-import numpy as np
+from PyQt5.QtGui import QColor
+from fifo import fifo
+from lru import lru
 
 #CacheConfig build the cache
 class CacheConfig():
     def __init__(self, nsets, blockSize, associativity, byteAddress):
+
         self.cacheSize = (nsets * blockSize * associativity)/8 # Convert the first argument into KB, 32 = 32KB, 64 = 64KB, 128 = 128KB, 256 = 256KB
         self.byteAddress = byteAddress # 8 bits = 1 byte
-        self.blockSize =  blockSize # 8 bits = 1 byte
+        self.blockSize =  blockSize*8 # 8 bits = 1 byte
         self.memoryAddressSize = 32 # 32 or 64 bits
         self.associativeWays = associativity # 1 = Direct Mapping, 2 = 2-way associative, 4 = 4-way associative, 8 = 8-way associative, 16 = 16-way associative
-        
+
         self.cacheLines = nsets  #Cache index size
         self.index = int(math.log(self.cacheLines,2)) # number of bits for index
         self.des = int(math.log(self.blockSize/self.byteAddress,2)) # number of bits for des
         self.trueCacheSize = round(((self.cacheLines * self.associativeWays) * (self.blockSize + (self.memoryAddressSize - self.index - self.des)+1))/8192, 3) # Conversion for true cache size in KB 
+        
         print("\n[Cache Configuration]")
         print(f'Index: {self.index}b\t Tag:{self.memoryAddressSize-self.index-self.des}b\t Des:{self.des}b\t CacheLines:{self.cacheLines}\t AssociativeWays:{self.associativeWays}')
         print(f'BlockSize:{int(self.blockSize/8)}B\t ByteAddress: {int(self.byteAddress/8)}B\t MemoryAddressSize: {self.memoryAddressSize}b\t ')
@@ -26,6 +30,7 @@ def startCache(cl):
     for i in range(cl):
         cacheMemory[i] = {'tag':0,'val':0,'data':0}
     return cacheMemory
+
 #Check if the cache is full, return true
 def checkCache(cacheMemory):
     for acessNumber in cacheMemory:
@@ -33,7 +38,7 @@ def checkCache(cacheMemory):
             return False
     return True
 
-def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
+def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag, dataGrid):
     cl = DirectMap.cacheLines # cl = cache lines
     cm = startCache(cl) # cm = Cache memory, start the cache with 0
     des = DirectMap.des # des = displacement
@@ -49,9 +54,13 @@ def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
     for binary in memoryAcess:
         #Gets the index of the binary
         if des == 0:
-            cmIndex = int(binary[32-index:],2) 
+            cmIndex = int(binary[32-index:],2)
         else:
-            cmIndex = int(binary[32-des-index:-des],2)
+            if index == 0:
+                cmIndex = 0
+            else:
+                cmIndex = int(binary[32-des-index:-des],2)
+
         #Using the Index that we got from the last step, we check if the tag is the same as the binary on the right position
         if  cm[cmIndex]['val'] == 1: #Before check the tag, we need to check the valid bit
             if  cm[cmIndex]['tag'] == binary[:-des-index]:
@@ -59,6 +68,12 @@ def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
             else:
                 miss = miss +1 #If valid bit is 1 and the tag is different, we have a conflict miss
                 cm[cmIndex]['tag'] = binary[:-des-index] #Update the tag
+                cm[cmIndex]['val'] = 1 # Update the valid bit
+                if dataGrid != None:
+                    item = dataGrid.item(cmIndex,0)
+                    item.setBackground(QColor("green"))
+                    item.setText(binary[:-des-index])
+                
                 if checkCache(cm) == False: #Check if the cache is full
                     capacityMiss = capacityMiss + 1
                 else:
@@ -69,6 +84,10 @@ def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
             compulsoryMiss = compulsoryMiss + 1
             cm[cmIndex]['tag'] = binary[:-des-index] #Update the tag
             cm[cmIndex]['val'] = 1 # Update the valid bit
+            if dataGrid != None:
+                item = dataGrid.item(cmIndex,0)
+                item.setBackground(QColor("green"))
+                item.setText(binary[:-des-index])
     
     #Writes the Cache Memory current state on the file
     with open('CacheReport.txt', 'w') as f:
@@ -77,7 +96,7 @@ def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
     
     misses = round(miss/len(memoryAcess), 3)
     hits = round(hit/len(memoryAcess), 3)
-    compulsoryMiss = round(compulsoryMiss/misses, 2)
+    compulsoryMiss = round(compulsoryMiss/miss, 3)
     capacityMiss = round(capacityMiss/miss, 3)
     conflictMiss = round(conflictMiss/miss, 3)
 
@@ -90,24 +109,21 @@ def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag):
         print(f'{hit+miss} {hits} {misses} {compulsoryMiss} {capacityMiss} {conflictMiss}')
         return f'{hit+miss} {hits} {misses} {compulsoryMiss} {capacityMiss} {conflictMiss}'
 
-def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputFlag):
+def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputFlag, dataGrid):
     cl = DirectMap.cacheLines # cl = cache lines
+    cm = [startCache(cl) for i in range(DirectMap.associativeWays)] # Construct a CacheMemory for each way of the cache, a cache memory is a dict and start evertything as 0 
     des = DirectMap.des # des = displacement
     index = DirectMap.index # size of cache index in bits
 
     hit = 0
     miss = 0
-
     compulsoryMiss = 0
     capacityMiss = 0
     conflictMiss = 0
 
-    cm = [startCache(cl) for i in range(DirectMap.associativeWays)] # Construct a CacheMemory for each way of the cache, a cache memory is a dict and start evertything as 0 
-    # start var A with np.array with a list of size cl and each element is a list of size associativityWays
-    fifo = np.array([[0 for i in range(DirectMap.associativeWays)] for j in range(cl)]) # Construct a matrix with the size of cacheLines and the number of ways, each element is a list with the size of the number of ways
-    # print first element of the list in A
+    fifoV = fifo()
+    lruV = lru()
 
-    for i in fifo: i.append(34)
     #each 32 bits on the file is a memory acess in binary 
     for binary in memoryAcess:
         #Gets the index of the binary
@@ -118,8 +134,6 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
                 cmIndex = 0
             else:
                 cmIndex = int(binary[32-des-index:-des],2)
-        #start a list fifo with size cl
-        #fifo = [0 for i in range(cl)]
         isTagTrue = False
         #For each way j of the cache, we check if the tag is the same as the binary on the right position and check the valid bit
         for j in range(DirectMap.associativeWays):
@@ -128,6 +142,8 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
                 if  cm[j][cmIndex]['tag'] == binary[:-des-index]:
                     hit = hit + 1
                     isTagTrue = True
+                    if replacementPolicy == "L":
+                        lruV.addToDict(cm[j][cmIndex]['tag'])
                     break
         #If the tag is not the same, we have a miss
         if isTagTrue == False:
@@ -138,9 +154,18 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
                 if  cm[j][cmIndex]['val'] == 0:
                     compulsoryMiss = compulsoryMiss + 1
                     cm[j][cmIndex]['tag'] = binary[:-des-index]
-                    #append tag to the first position of the list fifo and remove the last element
-                    #fifo[cmIndex] = [binary[:-des-index]] + fifo[cmIndex][:-1]
                     cm[j][cmIndex]['val'] = 1
+
+                    if replacementPolicy == "F":
+                        fifoV.enqueue(cm[j][cmIndex]['tag'])
+                    elif replacementPolicy == "L":
+                        lruV.addToDict(cm[j][cmIndex]['tag'])
+
+                    if dataGrid != None:
+                        item = dataGrid.item(cmIndex,j)
+                        item.setBackground(QColor("green"))
+                        item.setText(binary[:-des-index])
+                        
                     choosePosition = True
                     break
             #If choosePosition is false, it means that all the ways are full, so we need to use the replacement policy to choose which way to replace
@@ -160,11 +185,19 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
                         conflictMiss = conflictMiss + 1
                     
                     cm[addRandom][cmIndex]['tag'] = binary[:-des-index]
-                    #save the tag  in the first position of cmindex of the list fifo and remove the last element
-                    #fifo[cmIndex] = [binary[:-des-index]] + fifo[cmIndex][:-1]
-                
                     cm[addRandom][cmIndex]['val'] = 1
+                    if dataGrid != None:
+                        item = dataGrid.item(cmIndex,addRandom)
+                        item.setBackground(QColor("green"))
+                        item.setText(binary[:-des-index])
+
                 elif replacementPolicy == "F":
+                    Mylist = []
+                    for i in range(DirectMap.associativeWays):
+                        Mylist.append(cm[i][cmIndex]['tag'])
+                    
+                    addRandom = fifoV.checkWhoCameFirst(Mylist) 
+
                     #Check if the cache is full
                     isCmFull = True
                     for j in range(DirectMap.associativeWays):
@@ -175,7 +208,44 @@ def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputF
                         capacityMiss = capacityMiss + 1
                     else:
                         conflictMiss = conflictMiss + 1
-        #print(fifo)          
+                    
+                    cm[addRandom][cmIndex]['tag'] = binary[:-des-index] # type: ignore
+                    cm[addRandom][cmIndex]['val'] = 1 # type: ignore
+
+                    fifoV.enqueue(cm[addRandom][cmIndex]['tag']) # type: ignore 
+
+                    if dataGrid != None:
+                        item = dataGrid.item(cmIndex,addRandom)
+                        item.setBackground(QColor("green"))
+                        item.setText(binary[:-des-index])     
+
+                elif replacementPolicy == "L":
+                    Mylist = []
+                    for i in range(DirectMap.associativeWays):
+                        Mylist.append(cm[i][cmIndex]['tag'])
+                    
+                    addRandom = lruV.checkWhoCameFirst(Mylist) 
+                    
+                    #Check if the cache is full
+                    isCmFull = True
+                    for j in range(DirectMap.associativeWays):
+                        if checkCache(cm[j]) == False:
+                            isCmFull = False
+                        
+                    if isCmFull == True:
+                        capacityMiss = capacityMiss + 1
+                    else:
+                        conflictMiss = conflictMiss + 1
+                    
+                    cm[addRandom][cmIndex]['tag'] = binary[:-des-index] # type: ignore
+                    cm[addRandom][cmIndex]['val'] = 1 # type: ignore
+                    lruV.setItemToZero(cm[addRandom][cmIndex]['tag'])
+                    lruV.addToDict(cm[addRandom][cmIndex]['tag']) # type: ignore 
+
+                    if dataGrid != None:
+                        item = dataGrid.item(cmIndex,addRandom)
+                        item.setBackground(QColor("green"))
+                        item.setText(binary[:-des-index])     
  
     with open('CacheReport.txt', 'w') as f:
         for i in range(DirectMap.associativeWays):
