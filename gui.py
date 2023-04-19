@@ -276,10 +276,9 @@ class DataGrid(QMainWindow):
         self.table.setColumnCount(int(self.txt_assoc.text()))
         self.table.setRowCount(int(self.txt_nset.text()))
         self.reset_table(int(self.txt_nset.text()), int(self.txt_assoc.text()))
-        
-        #teste = CacheConfig(int(self.txt_nset.text()), int(self.txt_block_size.text()), int(self.txt_assoc.text()), 8)
-        
-        self.otp.append("Starting Benchmark")
+          
+        self.otp.clear()
+        self.otp.append("\nStarting Benchmark")
         
         thread = threading.Thread(target=self.cache_sim_thread)
         thread.start()
@@ -296,7 +295,15 @@ class DataGrid(QMainWindow):
         self.txt_compulsory_miss_rate.setText(val[3])
         self.txt_capacity_miss_rate.setText(val[4])
         self.txt_conflict_miss_rate.setText(val[5])
-        self.otp.append("Benchmark ended!")
+
+        with open("CacheConfig.txt", "r") as arquivo:
+            linha = arquivo.readline()
+            while linha:
+                self.otp.append(linha) 
+                linha = arquivo.readline()
+            
+   
+        self.otp.append("\nBenchmark ended!")
 
     def on_btn_save_clicked(self):
         print("Botão 'Save' clicado")

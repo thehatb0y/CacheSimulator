@@ -9,11 +9,12 @@ from lru import lru
 class CacheConfig():
     def __init__(self, nsets, blockSize, associativity, byteAddress):
 
-        self.cacheSize = (nsets * blockSize * associativity)/8 # Convert the first argument into KB, 32 = 32KB, 64 = 64KB, 128 = 128KB, 256 = 256KB
         self.byteAddress = byteAddress # 8 bits = 1 byte
         self.blockSize =  blockSize*8 # 8 bits = 1 byte
         self.memoryAddressSize = 32 # 32 or 64 bits
         self.associativeWays = associativity # 1 = Direct Mapping, 2 = 2-way associative, 4 = 4-way associative, 8 = 8-way associative, 16 = 16-way associative
+        
+        self.cacheSize = (nsets * self.blockSize * associativity)/8 # Convert the first argument into KB, 32 = 32KB, 64 = 64KB, 128 = 128KB, 256 = 256KB
 
         self.cacheLines = nsets  #Cache index size
         self.index = int(math.log(self.cacheLines,2)) # number of bits for index
@@ -24,6 +25,13 @@ class CacheConfig():
         print(f'Index: {self.index}b\t Tag:{self.memoryAddressSize-self.index-self.des}b\t Des:{self.des}b\t CacheLines:{self.cacheLines}\t AssociativeWays:{self.associativeWays}')
         print(f'BlockSize:{int(self.blockSize/8)}B\t ByteAddress: {int(self.byteAddress/8)}B\t MemoryAddressSize: {self.memoryAddressSize}b\t ')
         print(f'CacheSize:{round(self.cacheSize/1024, 3)}KB\t TrueCacheSize: {self.trueCacheSize}KB\t TrueCacheSize is {round((100 * ((round((self.trueCacheSize), 3))/(round((self.cacheSize/1024),3)))- 100), 3)}% bigger')
+
+        with open('CacheConfig.txt', 'w') as f: 
+            f.write("\n[Cache Configuration]")
+            f.write(f'\nIndex: {self.index}b\t Tag:{self.memoryAddressSize-self.index-self.des}b\t Des:{self.des}b\t CacheLines:{self.cacheLines}\t AssociativeWays:{self.associativeWays}')
+            f.write(f'\nBlockSize:{int(self.blockSize/8)}B\t ByteAddress: {int(self.byteAddress/8)}B\t MemoryAddressSize: {self.memoryAddressSize}b\t ')
+            f.write(f'\nCacheSize:{round(self.cacheSize/1024, 3)}KB\t TrueCacheSize: {self.trueCacheSize}KB\t \nTrueCacheSize is {round((100 * ((round((self.trueCacheSize), 3))/(round((self.cacheSize/1024),3)))- 100), 3)}% bigger')
+
 #Start the cache with 0
 def startCache(cl):
     cacheMemory = {}
