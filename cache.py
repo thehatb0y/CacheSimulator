@@ -13,19 +13,12 @@ class CacheConfig():
         self.blockSize =  blockSize*8 # 8 bits = 1 byte
         self.memoryAddressSize = 32 # 32 or 64 bits
         self.associativeWays = associativity # 1 = Direct Mapping, 2 = 2-way associative, 4 = 4-way associative, 8 = 8-way associative, 16 = 16-way associative
-        
         self.cacheSize = (nsets * self.blockSize * associativity)/8 # Convert the first argument into KB, 32 = 32KB, 64 = 64KB, 128 = 128KB, 256 = 256KB
-
         self.cacheLines = nsets  #Cache index size
         self.index = int(math.log(self.cacheLines,2)) # number of bits for index
         self.des = int(math.log(self.blockSize/self.byteAddress,2)) # number of bits for des
         self.trueCacheSize = round(((self.cacheLines * self.associativeWays) * (self.blockSize + (self.memoryAddressSize - self.index - self.des)+1))/8192, 3) # Conversion for true cache size in KB 
         
-        print("\n[Cache Configuration]")
-        print(f'Index: {self.index}b\t Tag:{self.memoryAddressSize-self.index-self.des}b\t Des:{self.des}b\t CacheLines:{self.cacheLines}\t AssociativeWays:{self.associativeWays}')
-        print(f'BlockSize:{int(self.blockSize/8)}B\t ByteAddress: {int(self.byteAddress/8)}B\t MemoryAddressSize: {self.memoryAddressSize}b\t ')
-        print(f'CacheSize:{round(self.cacheSize/1024, 3)}KB\t TrueCacheSize: {self.trueCacheSize}KB\t TrueCacheSize is {round((100 * ((round((self.trueCacheSize), 3))/(round((self.cacheSize/1024),3)))- 100), 3)}% bigger')
-
         with open('CacheConfig.txt', 'w') as f: 
             f.write("\n[Cache Configuration]")
             f.write(f'\nIndex: {self.index}b\t Tag:{self.memoryAddressSize-self.index-self.des}b\t Des:{self.des}b\t CacheLines:{self.cacheLines}\t AssociativeWays:{self.associativeWays}')
@@ -46,6 +39,7 @@ def checkCache(cacheMemory):
             return False
     return True
 
+# Return: If outputflag = 0 return data + print , If outputflag = 1 return data
 def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag, dataGrid):
     cl = DirectMap.cacheLines # cl = cache lines
     cm = startCache(cl) # cm = Cache memory, start the cache with 0
@@ -117,6 +111,7 @@ def cacheDirectMapAccess(DirectMap, memoryAcess, outputFlag, dataGrid):
         print(f'{hit+miss} {hits} {misses} {compulsoryMiss} {capacityMiss} {conflictMiss}')
         return f'{hit+miss} {hits} {misses} {compulsoryMiss} {capacityMiss} {conflictMiss}'
 
+# Return: If outputflag = 0 return data + print , If outputflag = 1 return data
 def cacheAssociativeMapAccess(DirectMap, replacementPolicy, memoryAcess, outputFlag, dataGrid):
     cl = DirectMap.cacheLines # cl = cache lines
     cm = [startCache(cl) for i in range(DirectMap.associativeWays)] # Construct a CacheMemory for each way of the cache, a cache memory is a dict and start evertything as 0 

@@ -1,7 +1,9 @@
-from PyQt5.QtWidgets import QApplication, QSlider, QMainWindow, QTableWidget, QTableWidgetItem, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QFormLayout, QRadioButton, QGroupBox, QGridLayout, QTextEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit, QFormLayout, QRadioButton, QGroupBox, QGridLayout, QTextEdit
 from PyQt5.QtGui import QColor
 from cache_simulator_for_gui import cache_sim
+
 from cache import CacheConfig
+from datetime import datetime
 
 import threading
 import queue
@@ -18,7 +20,7 @@ class DataGrid(QMainWindow):
         p1 = screen_resolution.height()/2
         p2 = screen_resolution.width()/2
         self.setGeometry(int(p2-475), int(p1-450), 960, 900)
-        self.setFixedSize(960, 900)
+        self.setFixedSize(960, 800)
         #self.setFixedSize(int(p2*2-100), int(p1*2-100))
 
         # Criar widget principal
@@ -112,8 +114,6 @@ class DataGrid(QMainWindow):
         #add the group box to the layout
         left_layout.addRow(rbtn_group)
         #-------------------------------------------------------------
-
-        #-------------------------------------------------------------
         rbtn_buttons = QGroupBox("Operations")
         hbox_buttons = QGridLayout()
         rbtn_buttons.setLayout(hbox_buttons)
@@ -177,7 +177,6 @@ class DataGrid(QMainWindow):
         hbox_result.addWidget(lbl_conflict_miss_rate, 5, 0)
         hbox_result.addWidget(self.txt_conflict_miss_rate, 5, 1)
 
-
         left_layout.addRow(rbtn_result)
         #-------------------------------------------------------------
         rbtn_output = QGroupBox("Output")
@@ -231,6 +230,14 @@ class DataGrid(QMainWindow):
 
         # Adicionar widget à direita do layout central
         central_layout.addWidget(right_widget)
+
+    def capture_screen(self):
+        now = datetime.now()
+        dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
+        filename = f"screenshot_{dt_string}.png"
+        screen = QApplication.primaryScreen()
+        pixmap = screen.grabWindow(self.winId())
+        pixmap.save(filename, 'png')
 
     def reset_table(self, num_linhas, num_colunas):
         for i in range(num_linhas):
@@ -306,8 +313,7 @@ class DataGrid(QMainWindow):
         self.otp.append("\nBenchmark ended!")
 
     def on_btn_save_clicked(self):
-        print("Botão 'Save' clicado")
-        # Adicione aqui a lógica que você deseja executar quando o botão 'Save' for clicado
+        self.capture_screen()
 
     def on_btn_stop_clicked(self):
         print("Botão 'Stop' clicado")

@@ -1,6 +1,6 @@
 
 [Cache Configuration]
-Index: 8b	 Tag:22b	 Des:2b	 CacheLines:256	 AssociativeWays:4
-BlockSize:4B	 ByteAddress: 1B	 MemoryAddressSize: 32b	 
-CacheSize:4.0KB	 TrueCacheSize: 6.875KB	 
-TrueCacheSize is 71.875% bigger
+Index: 6b	 Tag:22b	 Des:4b	 CacheLines:64	 AssociativeWays:1
+BlockSize:16B	 ByteAddress: 1B	 MemoryAddressSize: 32b	 
+CacheSize:1.0KB	 TrueCacheSize: 1.18KB	 
+TrueCacheSize is 18.0% bigger

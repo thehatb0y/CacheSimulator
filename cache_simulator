@@ -7,14 +7,14 @@ import sys
 #           python cache_simulator 256 1 2 R 1 bin_10000
 #           python cache_simulator 16 2 8 R 1 bin_10000
 
+#cache_simulator <nsets> <bsize> <assoc> <substituição> <flag_saida> arquivo_de_entrada
+#cacheSize = 64 # in KB 1= 1KB, 64 = 64KB
+#byteAddress = 8 # 8 bits = 1 byte
+#blockSize =  32 # 8 bits = 1 byte
+#memoryAddressSize = 32 # 32 or 64 bits
+#associativeWays = 1 # 1 = Direct Mapping, 2 = 2-way associative, 4 = 4-way associative, 8 = 8-way associative, 16 = 16-way associative
 
 def main():
-#cache_simulator <nsets> <bsize> <assoc> <substituição> <flag_saida> arquivo_de_entrada
-    #cacheSize = 64 # in KB 1= 1KB, 64 = 64KB
-    #byteAddress = 8 # 8 bits = 1 byte
-    #blockSize =  32 # 8 bits = 1 byte
-    #memoryAddressSize = 32 # 32 or 64 bits
-    #associativeWays = 1 # 1 = Direct Mapping, 2 = 2-way associative, 4 = 4-way associative, 8 = 8-way associative, 16 = 16-way associative
     nsets = int(sys.argv[1])
     blockSize = int(sys.argv[2])
     associativity = int(sys.argv[3])
@@ -22,6 +22,7 @@ def main():
     replacementPolicy = str(sys.argv[4])
     outputFlag = int(sys.argv[5])
     inputFile =  str(sys.argv[6])
+    
     #memoryAcess is a list of binary numbers
     memoryAcess = []
 
